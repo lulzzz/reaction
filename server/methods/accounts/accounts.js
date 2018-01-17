@@ -743,16 +743,7 @@ export function sendWelcomeEmail(shopId, userId) {
 
   const user = Accounts.findOne(userId);
   const shop = Shops.findOne(shopId);
-
-  // Get shop logo, if available. If not, use default logo from file-system
-  let emailLogo;
-  if (Array.isArray(shop.brandAssets)) {
-    const brandAsset = _.find(shop.brandAssets, (asset) => asset.type === "navbarBrandImage");
-    const mediaId = Media.findOne(brandAsset.mediaId);
-    emailLogo = path.join(Meteor.absoluteUrl(), mediaId.url());
-  } else {
-    emailLogo = Meteor.absoluteUrl() + "resources/email-templates/shop-logo.png";
-  }
+  const emailLogo = getEmailLogo(shop);
 
   const dataForEmail = {
     // Shop Data
@@ -915,7 +906,7 @@ function getEmailLogo(shop) {
   if (Array.isArray(shop.brandAssets)) {
     let media;
     const brandAsset =
-      _.find(shop.brandAssets, (asset) => asset.type === "navbarBrandImage");
+      shop.brandAssets.find((asset) => asset.type === "navbarBrandImage");
 
     if (brandAsset) {
       media = Media.findOne(brandAsset.mediaId);
