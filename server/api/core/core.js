@@ -26,7 +26,6 @@ import { createGroups } from "./groups";
 const { Jobs, Packages, Shops } = Collections;
 
 export default {
-
   init() {
     // run beforeCoreInit hooks
     Hooks.Events.run("beforeCoreInit");
@@ -365,28 +364,83 @@ export default {
   },
 
   /**
+   * @name connectionDataStore
+   * @summary a construct to store per-connection data. Once a connection is
+   * closed, the data is lost. This is server-side companion to Sessions in the
+   * client. connectionDataStore has two methods: get and set
+   * @memberof Core
+   */
+  connectionDataStore: (function () {
+    const inMemoryCache = {};
+    const connectionKey = "connection-data";
+
+    function connectionData() {
+      // similar to Meteor.userId()
+      const invocation =
+        DDP._CurrentMethodInvocation.get() ||
+        DDP._CurrentPublicationInvocation.get();
+
+      if (!invocation) {
+        // operating outside of a connection
+        return inMemoryCache;
+      }
+
+      const { connection } = invocation;
+
+      if (!(connectionKey in connection)) {
+        connection[connectionKey] = {};
+      }
+
+      return connection[connectionKey];
+    }
+
+    return {
+      get(key) {
+        return connectionData()[key];
+      },
+
+      set(key, val) {
+        connectionData()[key] = val;
+      }
+    };
+  })(),
+
+  debuggingQueryCount: 1,
+  debuggingSavedQueryCount: 1,
+  /**
    * @name getShopId
    * @method
    * @memberof Core
-   * @summary Get shop ID
-   * @todo This should intelligently find the correct default shop Probably whatever the main shop is or marketplace
-   * @param  {String} userId User ID String
+   * @summary Get shop ID, first by checking the current user's preferences
+   * then by getting the shop by the current domain.
+   * @todo should we return the Primary Shop if none found?
    * @return {StringId}        active shop ID
    */
-  getShopId(userId) {
-    check(userId, Match.Maybe(String));
-    const activeUserId = Meteor.call("reaction/getUserId");
-    if (activeUserId || userId) {
-      const activeShopId = this.getUserPreferences({
-        userId: activeUserId || userId,
-        packageName: "reaction",
-        preference: "activeShopId"
-      });
-      if (activeShopId) {
-        return activeShopId;
-      }
+  getShopId() {
+    // is there a stored value?
+    let shopId = this.connectionDataStore.get("shopId");
+
+    if (shopId) {
+console.log(`debugging: no database. skipped ${this.debuggingSavedQueryCount++} queries`);
+      return shopId;
     }
 
+    const activeUserId = Meteor.call("reaction/getUserId");
+    shopId = this.getUserShopId(activeUserId);
+console.log(`debugging: database query #${this.debuggingQueryCount++}`);
+
+    if (!shopId) {
+      shopId = this.getShopIdByDomain();
+console.log(`debugging: database query #${this.debuggingQueryCount++}`);
+    }
+
+    // store the value for faster responses
+    this.connectionDataStore.set("shopId", shopId);
+
+    return shopId;
+  },
+
+  getShopIdByDomain() {
     const domain = this.getDomain();
     const shop = Shops.find({
       domains: domain
@@ -396,7 +450,28 @@ export default {
         _id: 1
       }
     }).fetch()[0];
+
     return shop && shop._id;
+  },
+
+  /**
+   * @name getUserShopId
+   * @method
+   * @memberof Core
+   * @summary Get a user's shop ID, as stored in preferences
+   * @todo This should intelligently find the correct default shop Probably whatever the main shop is or marketplace
+   * @return {StringId}        active shop ID
+   */
+  getUserShopId(userId) {
+    check(userId, Match.Maybe(String));
+
+    if (!userId) { return; }
+
+    return this.getUserPreferences({
+      userId,
+      packageName: "reaction",
+      preference: "activeShopId"
+    });
   },
 
   /**
