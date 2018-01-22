@@ -1,7 +1,74 @@
 version: 2
 
 jobs:
-  build:
+  tests:
+    working_directory: /home/reaction
+
+    docker:
+      - image: node:8
+
+    environment:
+      - DOCKER_VERSION: 17.05.0-ce
+      - DOCKER_COMPOSE_VERSION: 1.15.0
+      - METEOR_ALLOW_SUPERUSER: true
+      - TOOL_NODE_FLAGS: "--max-old-space-size=4096"
+
+    steps:
+      - checkout
+
+      # install OS dependencies
+      - restore_cache:
+          name: Restoring Meteor cache
+          key: meteor
+
+      # Install Meteor
+      - run: .circleci/install_meteor.sh
+
+      # https://github.com/meteor/meteor/issues/4019
+      - run: sudo apt-get update
+      - run: DEBIAN_FRONTEND=noninteractive sudo apt-get install -y locales
+      - run: sudo sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+      - run: sudo dpkg-reconfigure --frontend=noninteractive locales
+      - run: sudo update-locale LANG=en_US.UTF-8
+      - run: export LANG=en_US.UTF-8
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      # Install dependencies
+      - run: meteor npm install
+
+      - restore_cache:
+          name: Restoring Meteor dev_bundle cache
+          key: dev_bundle
+
+      # run reaction tests
+      - run: .circleci/tests.sh
+
+      - save_cache:
+          name: Saving Meteor dev_bundle to cache
+          key: dev_bundle
+          paths:
+            - /home/reaction/.meteor/local
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - save_cache:
+          name: Saving Meteor to cache
+          key: meteor
+          paths:
+            - ~/.meteor
+
+
+  # publish built Reaction image to DockerHub
+  publishDockerImage:
     working_directory: /home/reaction
 
     docker:
@@ -17,49 +84,37 @@ jobs:
       - setup_remote_docker
       - checkout
 
-      # install OS dependencies
-      - restore_cache:
-          name: Restoring Meteor cache
-          key: meteor
-
-      - run: .circleci/install.sh
-
-      - save_cache:
-          name: Saving Meteor to cache
-          key: meteor
-          paths:
-            - ~/.meteor
-
-      # install app dependencies
-
-      - run: meteor npm install
-
-      # run tests
-      - restore_cache:
-          name: Restoring Meteor dev_bundle cache
-          key: dev_bundle
-
-      # run reaction tests
-      - run: .circleci/tests.sh
-
-      - save_cache:
-          name: Saving Meteor dev_bundle to cache
-          key: dev_bundle
-          paths:
-            - /home/reaction/.meteor/local
-
       - run:
           command: .circleci/build.sh
           no_output_timeout: 30m
+
+      - run: .circleci/deploy.sh
+
+
+  # deploy reaction docs
+  # deploy the build (if on a deployment branch)
+  deployDocs:
+    working_directory: /home/reaction
+
+    docker:
+      - image: node:8
+
+    environment:
+      - DOCKER_VERSION: 17.05.0-ce
+      - DOCKER_COMPOSE_VERSION: 1.15.0
+      - METEOR_ALLOW_SUPERUSER: true
+      - TOOL_NODE_FLAGS: "--max-old-space-size=4096"
+
+    steps:
+      - setup_remote_docker
+      - checkout
 
       - run:
           command: .reaction/jsdoc/build.sh
           no_output_timeout: 2m
 
-      # deploy the build (if on a deployment branch)
-
-      - deploy:
-          name: Deploy to S3 if tests pass and branch is Master
+      # Deploy to S3 if tests pass and branch is Master
+      - run:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               if [[ "${API_DOC_BUCKET}" && "${API_DOC_BUCKET_REGION}" ]]; then
@@ -71,6 +126,19 @@ jobs:
             else
               echo "Not master branch so not deploying"
             fi
-      - deploy:
-          name: Docker Image Deploment
-          command: .circleci/deploy.sh
+
+
+workflows:
+  version: 2
+
+  test_publish_deploy:
+    jobs:
+      - tests
+
+      - publishDockerImage:
+          requires:
+            - tests
+
+      - deployDocs:
+          requires:
+            - tests
