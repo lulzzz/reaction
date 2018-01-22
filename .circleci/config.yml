@@ -24,13 +24,15 @@ jobs:
       # Install Meteor
       - run: .circleci/install_meteor.sh
 
+      # install OS dependencies
+      - run: apt-get update
+      - run: apt-get install -y locales
+
+
+      # fix Meteor/Mongo locale issue on Debian
       # https://github.com/meteor/meteor/issues/4019
-      - run: sudo apt-get update
-      - run: DEBIAN_FRONTEND=noninteractive sudo apt-get install -y locales
-      - run: sudo sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-      - run: sudo dpkg-reconfigure --frontend=noninteractive locales
-      - run: sudo update-locale LANG=en_US.UTF-8
-      - run: export LANG=en_US.UTF-8
+      - run: locale-gen en_US.UTF-8
+      - run: localedef -i en_GB -f UTF-8 en_US.UTF-8
 
       # Download and cache dependencies
       - restore_cache:
