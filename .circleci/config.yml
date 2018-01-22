@@ -41,12 +41,16 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
+
       # Install dependencies
       - run: meteor npm install
 
       - restore_cache:
           name: Restoring Meteor dev_bundle cache
           key: dev_bundle
+
+      # install Reaction CLI
+      - run: npm install -g reaction-cli
 
       # run reaction tests
       - run: .circleci/tests.sh
