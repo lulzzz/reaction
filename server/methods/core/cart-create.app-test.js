@@ -132,7 +132,7 @@ describe("Add/Create cart methods", function () {
       Meteor.call("cart/addToCart", productId, variantId, quantity);
       const cart = Cart.findOne(cartId);
       expect(cart.items.length).to.equal(1);
-      expect(cart.items[0].quantity).to.equal(2);
+      expect(cart.items[0].quantity).to.equal(5);
     });
 
     it("should throw error an exception if user doesn't have a cart", function (done) {
