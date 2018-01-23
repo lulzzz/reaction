@@ -1,6 +1,7 @@
 version: 2
 
 jobs:
+  # run automated tests
   tests:
     working_directory: /home/reaction
 
@@ -73,8 +74,8 @@ jobs:
             - ~/.meteor
 
 
-  # publish built Reaction image to DockerHub
-  publishDockerImage:
+  # build a Reaction image and publish to DockerHub
+  publish:
     working_directory: /home/reaction
 
     docker:
@@ -98,7 +99,6 @@ jobs:
 
 
   # deploy reaction docs
-  # deploy the build (if on a deployment branch)
   deployDocs:
     working_directory: /home/reaction
 
@@ -119,7 +119,7 @@ jobs:
           command: .reaction/jsdoc/build.sh
           no_output_timeout: 2m
 
-      # Deploy to S3 if tests pass and branch is Master
+      # Deploys to S3 if tests pass and branch is Master
       - run:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -133,7 +133,6 @@ jobs:
               echo "Not master branch so not deploying"
             fi
 
-
 workflows:
   version: 2
 
@@ -141,7 +140,7 @@ workflows:
     jobs:
       - tests
 
-      - publishDockerImage:
+      - publish:
           requires:
             - tests
 
