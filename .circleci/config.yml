@@ -3,7 +3,7 @@ version: 2
 jobs:
   # run automated tests
   tests:
-    working_directory: /home/reaction
+    working_directory: ${HOME}/reaction
 
     docker:
       - image: circleci/node:8.9.3-browsers
