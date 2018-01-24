@@ -58,7 +58,7 @@ jobs:
           name: Saving Meteor dev_bundle to cache
           key: dev_bundle
           paths:
-            - /home/reaction/.meteor/local
+            - ${HOME}/reaction/.meteor/local
 
       - save_cache:
           paths:
@@ -74,7 +74,7 @@ jobs:
 
   # build a Reaction image and publish to DockerHub
   publish:
-    working_directory: /home/reaction
+    working_directory: ${HOME}/reaction
 
     docker:
       - image: node:8
@@ -98,7 +98,7 @@ jobs:
 
   # deploy reaction docs
   deployDocs:
-    working_directory: /home/reaction
+    working_directory: ${HOME}/reaction
 
     docker:
       - image: node:8
