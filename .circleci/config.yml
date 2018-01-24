@@ -74,7 +74,7 @@ jobs:
 
   # build a Reaction image and publish to DockerHub
   publish:
-    working_directory: ${HOME}/reaction
+    working_directory: /home/reaction
 
     docker:
       - image: node:8
@@ -98,7 +98,7 @@ jobs:
 
   # deploy reaction docs
   deployDocs:
-    working_directory: ${HOME}/reaction
+    working_directory: /home/reaction
 
     docker:
       - image: node:8
