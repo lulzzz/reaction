@@ -29,7 +29,6 @@ jobs:
       - run: apt-get update
       - run: apt-get install -y locales
 
-
       # fix Meteor/Mongo locale issue on Debian
       # https://github.com/meteor/meteor/issues/4019
       - run: locale-gen en_US.UTF-8
@@ -41,7 +40,6 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
-
 
       # Install dependencies
       - run: meteor npm install
@@ -125,7 +123,6 @@ jobs:
       - run:
           command: |
             if [[ "${API_DOC_BUCKET}" && "${API_DOC_BUCKET_REGION}" ]]; then
-              echo "if this logs, filter is not configured correctly"
               aws s3 sync /tmp/reaction-docs ${API_DOC_BUCKET} --delete --region ${API_DOC_BUCKET_REGION}
             else
               echo "S3 bucket configuration not found for jsdocs"
