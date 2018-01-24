@@ -6,7 +6,7 @@ jobs:
     working_directory: /home/reaction
 
     docker:
-      - image: node:8
+      - image: circleci/node:8.9.1-browsers
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
@@ -125,7 +125,6 @@ jobs:
       - run:
           command: |
             if [[ "${API_DOC_BUCKET}" && "${API_DOC_BUCKET_REGION}" ]]; then
-              echo "if this logs, filter is not configured correctly"
               aws s3 sync /tmp/reaction-docs ${API_DOC_BUCKET} --delete --region ${API_DOC_BUCKET_REGION}
             else
               echo "S3 bucket configuration not found for jsdocs"
