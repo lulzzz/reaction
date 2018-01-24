@@ -18,9 +18,9 @@ jobs:
       - checkout
 
       # install OS dependencies
-      - restore_cache:
-          name: Restoring Meteor cache
-          key: meteor
+      # - restore_cache:
+      #     name: Restoring Meteor cache
+      #     key: meteor
 
       # Install Meteor
       - run: .circleci/install_meteor.sh
@@ -35,18 +35,18 @@ jobs:
       - run: localedef -i en_GB -f UTF-8 en_US.UTF-8
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      # - restore_cache:
+      #     keys:
+      #     - v1-dependencies-{{ checksum "package.json" }}
+      #     # fallback to using the latest cache if no exact match is found
+      #     - v1-dependencies-
 
       # Install dependencies
       - run: meteor npm install
 
-      - restore_cache:
-          name: Restoring Meteor dev_bundle cache
-          key: dev_bundle
+      # - restore_cache:
+      #     name: Restoring Meteor dev_bundle cache
+      #     key: dev_bundle
 
       # install Reaction CLI
       - run: npm install -g reaction-cli
