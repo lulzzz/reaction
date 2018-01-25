@@ -6,7 +6,7 @@ jobs:
     working_directory: ${HOME}/reaction
 
     docker:
-      - image: circleci/node:8.9.3-browsers
+      - image: circleci/node
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
@@ -15,13 +15,12 @@ jobs:
       - TOOL_NODE_FLAGS: "--max-old-space-size=4096"
 
     steps:
-      - setup_remote_docker
       - checkout
 
       # install OS dependencies
-      # - restore_cache:
-      #     name: Restoring Meteor cache
-      #     key: meteor
+      - restore_cache:
+          name: Restoring Meteor cache
+          key: meteor
 
       # Install Meteor
       - run: .circleci/install_meteor.sh
@@ -36,18 +35,18 @@ jobs:
       - run: localedef -i en_GB -f UTF-8 en_US.UTF-8
 
       # Download and cache dependencies
-      # - restore_cache:
-      #     keys:
-      #     - v1-dependencies-{{ checksum "package.json" }}
-      #     # fallback to using the latest cache if no exact match is found
-      #     - v1-dependencies-
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
 
       # Install dependencies
       - run: meteor npm install
 
-      # - restore_cache:
-      #     name: Restoring Meteor dev_bundle cache
-      #     key: dev_bundle
+      - restore_cache:
+          name: Restoring Meteor dev_bundle cache
+          key: dev_bundle
 
       # install Reaction CLI
       - run: npm install -g reaction-cli
@@ -78,7 +77,7 @@ jobs:
     working_directory: /home/reaction
 
     docker:
-      - image: node:8.9.3
+      - image: node:8
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
@@ -102,7 +101,7 @@ jobs:
     working_directory: /home/reaction
 
     docker:
-      - image: node:8.9.3
+      - image: node:8
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
