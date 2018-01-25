@@ -6,7 +6,7 @@ jobs:
     working_directory: /home/reaction
 
     docker:
-      - image: node:8-browsers
+      - image: node:8
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
