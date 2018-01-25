@@ -6,7 +6,7 @@ jobs:
     working_directory: ${HOME}/reaction
 
     docker:
-      - image: node:8.9.3-browsers
+      - image: circleci/node:8.9.3-browsers
 
     environment:
       - DOCKER_VERSION: 17.05.0-ce
